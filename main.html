@@ -569,11 +569,7 @@
             // 设置好感度文字
             let text = '';
 
-            if (userName == '李梓豪'){
-                favorLevel = 100;
-                text = `💕好感度拉满，就像肉棒一样温暖(${favorLevel})`;
-            }
-            else if (favorLevel >= 80) {
+            if (favorLevel >= 80) {
                 text = `❤️ 满分好感！你是最棒的！(${favorLevel})`;
             } else if (favorLevel >= 60) {
                 text = `💕 超级喜欢你！(${favorLevel})`;
