@@ -567,6 +567,11 @@
             heart.style.color = favorLevel >= 0 ? '#e74c3c' : '#333';
             
             // 设置好感度文字
+
+            if (userName == '李梓豪'){
+                text = `💕好感度拉满，就像肉棒一样温暖`;
+                favorLevel = 100;
+            }
             let text = '';
             if (favorLevel >= 80) {
                 text = `❤️ 满分好感！你是最棒的！(${favorLevel})`;
