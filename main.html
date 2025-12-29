@@ -289,6 +289,41 @@
             pointer-events: none;
         }
 
+        /* 特殊好感度样式 */
+        .special-favor .heart {
+            animation: heartbeat 1.5s infinite ease-in-out;
+            text-shadow: 0 0 20px #ff6b6b, 0 0 40px #ff5252;
+        }
+
+        .special-favor .favor-text {
+            color: #ffd700;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        /* 黑名单样式 */
+        .blacklist-favor .heart {
+            animation: pulse 1s infinite;
+            color: #000 !important;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .blacklist-favor .favor-text {
+            color: #ff6b6b;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255, 107, 107, 0.5);
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(0.8); }
+        }
+
         /* 响应式 */
         @media (max-width: 768px) {
             .envelope {
@@ -485,10 +520,50 @@
             }
         }
         
+        // 特殊人名列表（50个）
+        const specialNames = [
+            '张三', '李四', '王五', '赵六', '钱七', '孙八', '周九', '吴十',
+            '陈十一', '林十二', '黄十三', '何十四', '刘十五', '杨十六', '徐十七',
+            '高十八', '马十九', '朱二十', '胡二十一', '郭二十二', '何二十三',
+            '罗二十四', '梁二十五', '宋二十六', '郑二十七', '谢二十八', '韩二十九',
+            '唐三十', '冯三十一', '于三十二', '董三十三', '萧三十四', '程三十五',
+            '曹三十六', '袁三十七', '邓三十八', '许三十九', '傅四十', '沈四十一',
+            '曾四十二', '彭四十三', '吕四十四', '苏四十五', '卢四十六', '蒋四十七',
+            '蔡四十八', '贾四十九', '丁五十'
+        ];
+        
+        // 黑名单（5个）
+        const blackList = ['管理员', 'admin', 'root', '测试', 'test'];
+        
+        // 特殊好感度祝福语
+        const specialFavorTexts = [
+            '❤️ 满分100！你是我最重要的人！',
+            '💖 满分100！遇见你是我最大的幸运！',
+            '💕 满分100！你就是我的全世界！',
+            '✨ 满分100！愿与你共度每一个春夏秋冬！',
+            '🌟 满分100！你值得世间所有美好！',
+            '💫 满分100！你是我心中最亮的星！',
+            '🌙 满分100！愿守护你一生一世！',
+            '☀️ 满分100！你就是我的阳光！',
+            '🌈 满分100！愿为你画出人生彩虹！',
+            '🌹 满分100！你是我的唯一挚爱！'
+        ];
+        
+        // 黑名单好感度文字
+        const blackListTexts = [
+            '🖤 好感度-100！检测到管理员身份，系统锁定！',
+            '💀 好感度-100！测试账号不参与情感计算！',
+            '☠️ 好感度-100！系统拒绝服务！',
+            '⛔ 好感度-100！访问权限不足！',
+            '🔒 好感度-100！此账号已被列入黑名单！'
+        ];
+        
         // 页面状态管理
         let currentState = 'envelope'; // envelope, input, message, favor
         let userName = '';
         let favorLevel = 0;
+        let isSpecialUser = false;
+        let isBlackListed = false;
         let snowflakeSystem = null;
         
         // DOM元素
@@ -505,6 +580,21 @@
         const favorText = document.getElementById('favor-text');
         const body = document.body;
         
+        // 检查是否为特殊用户
+        function isSpecialName(name) {
+            if (!name) return false;
+            // 不区分大小写，去除空格
+            const cleanName = name.trim().toLowerCase();
+            return specialNames.some(special => special.toLowerCase() === cleanName);
+        }
+        
+        // 检查是否为黑名单用户
+        function isBlackListedName(name) {
+            if (!name) return false;
+            const cleanName = name.trim().toLowerCase();
+            return blackList.some(black => black.toLowerCase() === cleanName);
+        }
+        
         // 事件处理
         envelope.addEventListener('click', () => {
             if (currentState === 'envelope') {
@@ -519,6 +609,8 @@
             const name = nameInput.value.trim();
             if (name) {
                 userName = name;
+                isSpecialUser = isSpecialName(name);
+                isBlackListed = isBlackListedName(name);
                 showMessageSection();
             } else {
                 nameInput.placeholder = '请输入名字哦~';
@@ -558,8 +650,14 @@
             currentState = 'favor';
             messageSection.classList.remove('active');
             
-            // 计算好感度（-100到100之间的随机数）
-            favorLevel = Math.floor(Math.random() * 201) - 100;
+            // 根据用户类型设置好感度
+            if (isSpecialUser) {
+                favorLevel = 100;
+            } else if (isBlackListed) {
+                favorLevel = -100;
+            } else {
+                favorLevel = Math.floor(Math.random() * 201) - 100;
+            }
             
             // 设置心形大小和颜色
             const size = Math.abs(favorLevel) * 0.5 + 50; // 50-100px
@@ -568,25 +666,47 @@
             
             // 设置好感度文字
             let text = '';
-
-            if (favorLevel >= 80) {
+            if (isSpecialUser) {
+                // 从特殊祝福语中随机选择
+                const randomIndex = Math.floor(Math.random() * specialFavorTexts.length);
+                text = specialFavorTexts[randomIndex];
+                // 添加特殊样式类
+                favorSection.classList.add('special-favor');
+                favorSection.classList.remove('blacklist-favor');
+            } else if (isBlackListed) {
+                // 从黑名单祝福语中随机选择
+                const randomIndex = Math.floor(Math.random() * blackListTexts.length);
+                text = blackListTexts[randomIndex];
+                // 添加黑名单样式类
+                favorSection.classList.add('blacklist-favor');
+                favorSection.classList.remove('special-favor');
+            } else if (favorLevel >= 80) {
                 text = `❤️ 满分好感！你是最棒的！(${favorLevel})`;
+                favorSection.classList.remove('special-favor', 'blacklist-favor');
             } else if (favorLevel >= 60) {
                 text = `💕 超级喜欢你！(${favorLevel})`;
+                favorSection.classList.remove('special-favor', 'blacklist-favor');
             } else if (favorLevel >= 40) {
                 text = `💖 非常喜欢你！(${favorLevel})`;
+                favorSection.classList.remove('special-favor', 'blacklist-favor');
             } else if (favorLevel >= 20) {
                 text = `💗 很喜欢你！(${favorLevel})`;
+                favorSection.classList.remove('special-favor', 'blacklist-favor');
             } else if (favorLevel >= 0) {
                 text = `❤ 很喜欢你！(${favorLevel})`;
+                favorSection.classList.remove('special-favor', 'blacklist-favor');
             } else if (favorLevel >= -20) {
                 text = `🖤 还需要多了解你~ (${favorLevel})`;
+                favorSection.classList.remove('special-favor', 'blacklist-favor');
             } else if (favorLevel >= -40) {
                 text = `🖤 保持距离，慢慢来~ (${favorLevel})`;
+                favorSection.classList.remove('special-favor', 'blacklist-favor');
             } else if (favorLevel >= -60) {
                 text = `🖤 需要更多时间了解你... (${favorLevel})`;
+                favorSection.classList.remove('special-favor', 'blacklist-favor');
             } else {
                 text = `🖤 好感度需要努力提升哦！(${favorLevel})`;
+                favorSection.classList.remove('special-favor', 'blacklist-favor');
             }
             
             favorText.innerHTML = text;
